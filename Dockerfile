@@ -1,14 +1,19 @@
-# Use a base image with Java and Maven installed
-FROM openjdk:17
+FROM maven:3.8.4-openjdk-17 AS build
 
-# Set the working directory in the container
 WORKDIR /app
 
-# Copy the JAR file built from your Spring Boot application to the container
-COPY target/*.jar /app/app.jar
+COPY pom.xml .
 
-# Expose the port your Spring Boot app runs on (assuming it's 8080)
+COPY src ./src
+
+RUN mvn clean package -DskipTests
+
+FROM openjdk:17-jdk-slim AS production
+
+WORKDIR /app
+
+COPY --from=build /app/target/auth-service.jar ./auth-app.jar
+
 EXPOSE 8080
 
-# Command to run the Spring Boot application when the container starts
-CMD ["java", "-jar", "app.jar"]
+CMD ["java","-jar","auth-app.jar"]
